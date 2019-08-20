@@ -37,9 +37,11 @@ select dbo.DownloadFileCache(
 
 select * 
 from openrowset(
-'Microsoft.ACE.OLEDB.12.0',
-'Excel 8.0;hdr=no;Database=\\192.168.1.34\database\中证指数\000926cons.xls',
-'select * from [2019-08-19$]')
+	'Microsoft.ACE.OLEDB.12.0',
+	'Excel 8.0;hdr=no;Database=\\192.168.1.34\database\中证指数\000926cons.xls',
+	'select * from [2019-08-19$]'
+)
+
 
 
 --计算每周一定投1000收益率（不考虑分红），利用全局变量进行累加运算
@@ -79,8 +81,8 @@ exec dbo.ExecuteReflection
 	null,
 	'Format', 
 	'select ''{0:D4}'', 1 union all select ''{0:D4}'', 2',
-	1
---等价于
+	0
+--可用TextFormat代替
 select dbo.TextFormat(f1, f2)
 from (
 	select '{0:D4}' as f1, 1 as f2
@@ -95,7 +97,7 @@ exec dbo.ExecuteReflection
 	'select ''\\192.168.1.34\database\中证指数\000926cons.xls'' union all select ''\\192.168.1.34\database\国富人寿\998600指数交易数据（20181228）.xlsx''', 
 	null, 
 	null,
-	1
+	0
 
 --执行反射方法，获取目录下文件信息
 exec dbo.ExecuteReflection 
@@ -103,7 +105,7 @@ exec dbo.ExecuteReflection
 	'select ''\\192.168.1.34\database\中证指数\'' union all select ''\\192.168.1.34\database\国富人寿\''', 
 	'GetFiles', 
 	null,
-	1
+	0
 --可用FileTree读取文件树代替
 select *
 from dbo.FileTree('\\192.168.1.34\database\中证指数\', 0, null)

@@ -13,7 +13,7 @@ public partial class Procedure
 {
     //循环调用执行反射函数
     [SqlProcedure]
-    public static void ExecuteReflection(string className, string constructorParamterSql, string methodName, string methodParamterSql, bool isSetResult)
+    public static void ExecuteReflection(string className, string constructorParamterSql, string methodName, string methodParamterSql, bool isTextResult)
     {
         //查找类
         Type type = Type.GetType(className.StartsWith("System.") ? className : "System." + className);
@@ -149,7 +149,7 @@ public partial class Procedure
                 record = new SqlDataRecord(metaDatas.ToArray());
             }
             int row = 1;
-            if(isSetResult)
+            if(!isTextResult)
                 SqlContext.Pipe.SendResultsStart(record);
             do
             {
@@ -170,7 +170,7 @@ public partial class Procedure
                         }
                         instance = ctor.Invoke(paramters);
                     }
-                    if(!isSetResult)
+                    if(isTextResult)
                         SqlContext.Pipe.Send("创建实例 " + instance);
                 }
                 do
@@ -193,37 +193,37 @@ public partial class Procedure
                             result = method.Invoke(instance, paramters);
                         }
                     }
-                    if(!isSetResult)
+                    if(isTextResult)
                         SqlContext.Pipe.Send("执行结果 " + result);
                     //输出结果
                     if(isBasicType)
                     {
-                        if(!isSetResult)
+                        if(isTextResult)
                             SqlContext.Pipe.Send("行 " + row + " \t值 " + result);
                         record.SetValue(0, result);
-                        if(isSetResult)
+                        if(!isTextResult)
                             SqlContext.Pipe.SendResultsRow(record);
                     }
                     else
                     {
                         foreach(object item in isIteratorType ? (IEnumerable)result : new object[] { result })
                         {
-                            if(!isSetResult)
-                                SqlContext.Pipe.Send("返回结果 " + item);
+                            if(isTextResult)
+                                SqlContext.Pipe.Send("当前结果 " + item);
                             for(int i = 0; i < properties.Count; i++)
                             {
-                                if(!isSetResult)
+                                if(isTextResult)
                                     SqlContext.Pipe.Send("行 " + row + " 列 " + properties[i].Name + " \t值 " + properties[i].GetValue(item, null));
                                 record.SetValue(i, properties[i].GetValue(item, null)?.ToString());
                             }
-                            if(isSetResult)
+                            if(!isTextResult)
                                 SqlContext.Pipe.SendResultsRow(record);
                         }
                     }
                     row++;
                 } while(methodReader != null && methodReader.Read());
             } while(ctorReader != null && ctorReader.Read());
-            if(isSetResult)
+            if(!isTextResult)
                 SqlContext.Pipe.SendResultsEnd();
             //清理
             if(ctorReader != null)
