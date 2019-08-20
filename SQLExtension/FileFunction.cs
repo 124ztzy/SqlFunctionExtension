@@ -9,7 +9,7 @@ using System.Collections;
 //文件函数
 public static partial class Function
 {
-    //文件长度
+    //文件长度，文件不存在返回-1
     [SqlFunction]
     public static long FileSize(string path)
     {
@@ -19,7 +19,7 @@ public static partial class Function
         else
             return -1;
     }
-    //移动文件
+    //移动文件，返回文件长度
     [SqlFunction]
     public static long FileMove(string path1, string path2)
     {
@@ -37,7 +37,7 @@ public static partial class Function
             return -1;
         }
     }
-    //复制文件
+    //复制文件，返回文件长度
     [SqlFunction]
     public static long FileCopy(string path1, string path2)
     {
@@ -55,7 +55,7 @@ public static partial class Function
             return -1;
         }
     }
-    //删除文件
+    //删除文件，返回文件长度
     [SqlFunction]
     public static long FileDelete(string path)
     {
@@ -72,7 +72,7 @@ public static partial class Function
     }
 
 
-    //文件列表
+    //文件列表，lastList传空即可
     [SqlFunction(TableDefinition = "fullPath nvarchar(max), fileName nvarchar(max), isDirectory bit, fileSize bigint, lastWirteTime datetime", FillRowMethodName = "FillFileTreeRow")]
     public static IEnumerable FileTree(string path, bool isRecurve, object lastList)
     {
@@ -101,13 +101,13 @@ public static partial class Function
     }
 
 
-    //读取文本
+    //读取文本，默认utf-8编码
     [SqlFunction]
     public static string FileRead(string path, string encoding)
     {
         return File.ReadAllText(path, string.IsNullOrEmpty(encoding) ? Encoding.UTF8 : Encoding.GetEncoding(encoding));
     }
-    //写入文本
+    //写入文本，默认utf-8编码
     [SqlFunction]
     public static long FileWirte(string path, string content, string encoding)
     {
@@ -118,7 +118,6 @@ public static partial class Function
         File.WriteAllBytes(path, data);
         return data.LongLength;
     }
-
 
 
     //下载文件
@@ -134,7 +133,7 @@ public static partial class Function
         File.WriteAllBytes(savePath, data);
         return data.LongLength;
     }
-    //下载文件并缓存，文件超出过期时间将重新下载
+    //下载文件并缓存，文件写入时间超出过期时间将重新下载
     [SqlFunction]
     public static long DownloadFileCache(string url, string referer, string postParam, string savePath, TimeSpan dueTime)
     {
@@ -156,7 +155,7 @@ public static partial class Function
         else
             return webClient.UploadString(url, postParam);
     }
-    //下载文本并缓存
+    //下载文本并缓存，文件写入时间超出过期时间将重新下载
     [SqlFunction]
     public static string DownloadTextCache(string url, string referer, string postParam, string encoding, string savePath, TimeSpan dueTime)
     {
@@ -174,5 +173,4 @@ public static partial class Function
             return content;
         }
     }
-    
 }

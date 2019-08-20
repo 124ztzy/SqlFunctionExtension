@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System;
+using System.Data.SqlTypes;
 
 
 //全局变量函数
@@ -39,7 +40,7 @@ public partial class Function
     }
     //返回整数类型
     [SqlFunction]
-    public static long? VariableBigint(string name)
+    public static SqlInt64 VariableBigint(string name)
     {
         if(_variable.TryGetValue(name, out object value))
         {
@@ -47,13 +48,13 @@ public partial class Function
         }
         else
         {
-            return null;
+            return SqlInt64.Null;
         }
     }
     //返回小数类型
     [SqlFunction]
     [return: SqlFacet(Scale = 6)]
-    public static decimal? VariableDecimal(string name)
+    public static SqlDecimal VariableDecimal(string name)
     {
         if(_variable.TryGetValue(name, out object value))
         {
@@ -61,12 +62,12 @@ public partial class Function
         }
         else
         {
-            return null;
+            return SqlDecimal.Null;
         }
     }
 
 
-    //赋值定义全局变量
+    //赋值或定义全局变量
     [SqlFunction]
     public static object VariableAssign(string name, object value)
     {
@@ -81,7 +82,7 @@ public partial class Function
             return value;
         }
     }
-    //清除全局变量
+    //清除全局变量，传null将全部清理
     [SqlFunction]
     public static bool VariableClear(string name)
     {
@@ -97,7 +98,7 @@ public partial class Function
     }
 
 
-    //查看全部全局变量
+    //查看全局变量
     [SqlFunction(TableDefinition = "variableName nvarchar(max), variableValue nvarchar(max)", FillRowMethodName = "FillVariableViewRow")]
     public static IEnumerable VariableView()
     {
