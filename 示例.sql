@@ -35,12 +35,21 @@ select dbo.DownloadFileCache(
 	'\\192.168.1.34\database\中证指数\000926cons.xls',
 	'12:00:00')
 
+
+
+--读取Excel
 select * 
 from openrowset(
 	'Microsoft.ACE.OLEDB.12.0',
 	'Excel 8.0;hdr=no;Database=\\192.168.1.34\database\中证指数\000926cons.xls',
-	'select * from [2019-08-19$]'
+	'select * from [2019-08-20$]'
 )
+--可用ExcelRead代替，避免OLEDB莫名其妙的报错
+--需要添加程序集ICSharpCode.SharpZipLib.dll、ExcelDataReader.dll
+select [0] as tradeDate, [1] as indexCode, [2] as indexName, [4] as stockCode, [5] as stockName
+from dbo.ExcelRead('\\192.168.1.34\database\中证指数\000926cons2.xls') as t1
+pivot (max(cellValue) for columnNumber in ([0],[1],[2],[3],[4],[5],[6],[7])) as t2
+where [0] != '日期Date'
 
 
 
