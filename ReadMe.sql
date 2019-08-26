@@ -20,7 +20,11 @@ from dbo.SequenceDateTime('2019-01-01 00:00:00', '2019-01-02 00:00:00', '01:00:0
 select matchNumber, '000001' as fundCode, '华夏成长混合' as fundName, [1] as tradeDate, [3] as jz, [5] as ljjz
 into #jz
 from dbo.RegexMatch(
-	 dbo.DownloadText('http://api.fund.eastmoney.com/f10/lsjz?fundCode=000001&pageIndex=1&pageSize=1000', 'http://fundf10.eastmoney.com/jjjz_000001.html', null, null),
+	 dbo.DownloadText(
+		'http://api.fund.eastmoney.com/f10/lsjz?fundCode=000001&pageIndex=1&pageSize=1000', 
+		'http://fundf10.eastmoney.com/jjjz_000001.html', 
+		 null, 
+		 null),
 	 dbo.JsonRegex('FSRQ, DWJZ, LJJZ', 0),
 	 0
 ) as t1
