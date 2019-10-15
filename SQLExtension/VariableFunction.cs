@@ -110,5 +110,5 @@ public partial class Function
         variableName = pair.Key;
         variableValue = pair.Value.ToString();
     }
-    
+
 }

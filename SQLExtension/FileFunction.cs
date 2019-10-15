@@ -4,11 +4,56 @@ using System.Net;
 using System.Text;
 using System;
 using System.Collections;
+using System.Diagnostics;
 
 
 //文件函数
 public static partial class Function
 {
+    ////连接共享目录
+    //[SqlFunction]
+    //public static string ConnectSharedDirectory(string path, string user, string password)
+    //{
+    //    string errormsg = null;
+    //    Process proc = new Process();
+    //    try
+    //    {
+    //        proc.StartInfo.FileName = "cmd.exe";
+    //        proc.StartInfo.UseShellExecute = false;
+    //        proc.StartInfo.RedirectStandardInput = true;
+    //        proc.StartInfo.RedirectStandardOutput = true;
+    //        proc.StartInfo.RedirectStandardError = true;
+    //        proc.StartInfo.CreateNoWindow = true;
+    //        proc.Start();
+    //        proc.StandardInput.WriteLine("net use " + path + " /del");
+    //        proc.StandardInput.WriteLine("net use " + path + " " + password + " /user:" + user);
+    //        proc.StandardInput.WriteLine("exit");
+    //        while(!proc.HasExited)
+    //        {
+    //            proc.WaitForExit(1000);
+    //        }
+    //        errormsg = proc.StandardError.ReadToEnd();
+    //        proc.StandardError.Close();
+    //    }
+    //    catch(Exception ex)
+    //    {
+    //        throw ex;
+    //    }
+    //    finally
+    //    {
+    //        proc.Close();
+    //        proc.Dispose();
+    //    }
+    //    return errormsg;
+    //}
+
+
+    //文件长度，文件不存在返回-1
+    [SqlFunction]
+    public static bool FileExist(string path)
+    {
+        return File.Exists(path);
+    }
     //文件长度，文件不存在返回-1
     [SqlFunction]
     public static long FileSize(string path)
@@ -163,7 +208,7 @@ public static partial class Function
         if(file.Exists && (DateTime.Now - file.LastWriteTime) < dueTime)
         {
             return File.ReadAllText(savePath);
-        } 
+        }
         else
         {
             string content = DownloadText(url, referer, postParam, encoding);

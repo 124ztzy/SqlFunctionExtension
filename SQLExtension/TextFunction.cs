@@ -85,6 +85,29 @@ public partial class Function
     }
 
 
+    //将\u十六进制编码转化汉字
+    [SqlFunction]
+    public static string ConvertUnicode(string text)
+    {
+        StringBuilder builder = new StringBuilder();
+        int i = 0;
+        while(i < text.Length)
+        {
+            if(text[i] == '\\' && text[i + 1] == 'u')
+            {
+                int word = Convert.ToInt32(text.Substring(i + 2, 4), 16);
+                builder.Append((char)word);
+                i += 6;
+            }
+            else
+            {
+                builder.Append(text[i]);
+                i++;
+            }
+        }
+        return builder.ToString();
+    }
+
 
     //正则表达式判断
     [SqlFunction]
@@ -197,9 +220,9 @@ public partial class Function
                 if(builder.Length > 0)
                     builder.Append(",.*?");
                 if(useGroupName)
-                    builder.Append("\"?" + field + "\"?\\s*:\\s*" + "(?:\"(?<" + field + ">\\S*?)\"|(?<" + field + ">[\\d\\.\\+\\-eE]+|true|false|null))");
+                    builder.Append("\"" + field + "\"\\s*:\\s*" + "(?:\"(?<" + field + ">[^\"]*?)\"|(?<" + field + ">[\\d\\.\\+\\-eE]+|true|false|null))");
                 else
-                    builder.Append("\"?" + field + "\"?\\s*:\\s*" + "(?:\"(\\S*?)\"|([\\d\\.\\+\\-eE]+|true|false|null))");
+                    builder.Append("\"" + field + "\"\\s*:\\s*" + "(?:\"([^\"]*?)\"|([\\d\\.\\+\\-eE]+|true|false|null))");
             }
         }
         return builder.ToString();
