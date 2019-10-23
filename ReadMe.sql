@@ -49,7 +49,7 @@ from dbo.RegexMatch(
 	 dbo.JsonRegex('FSRQ, DWJZ, LJJZ', 0),
 	 0
 ) as t1
-pivot (max(captureValue) for groupName in ([1],[3],[5])) as t2
+pivot (max(cellValue) for groupName in ([1],[3],[5])) as t2
 
 
 --下载中证央企指数样本，下载一次后，12小时内调用将不再下载
@@ -65,7 +65,7 @@ select dbo.DownloadFileCache(
 --需要添加程序集ICSharpCode.SharpZipLib.dll、ExcelDataReader.dll
 select [0] as tradeDate, [1] as indexCode, [2] as indexName, [4] as stockCode, [5] as stockName
 from dbo.ExcelRead('\\192.168.1.34\database\中证指数\000926cons2.xls') as t1
-pivot (max(cellValue) for columnNumber in ([0],[1],[2],[3],[4],[5],[6],[7])) as t2
+pivot (max(cellValue) for columnName in ([0],[1],[2],[3],[4],[5],[6],[7])) as t2
 where [0] != '日期Date'
 --可用OLEDB驱动代替
 select * 
@@ -110,7 +110,7 @@ order by tradeDate
 
 
 									      
---5. 调用C#反射函数
+--5. 调用C#反射函数（已废除）
 --执行反射方法，格式化字符串
 exec dbo.ExecuteReflection 
 	'System.String', 
