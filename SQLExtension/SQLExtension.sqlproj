@@ -71,13 +71,27 @@
     <Reference Include="System" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Data" />
+    <Reference Include="ExcelDataReader">
+      <HintPath>..\..\Platform6\packages\ExcelDataReader.3.6.0\lib\net20\ExcelDataReader.dll</HintPath>
+    </Reference>
+    <Reference Include="HtmlAgilityPack">
+      <HintPath>..\..\Platform6\net\packages\HtmlAgilityPack.1.11.12\lib\Net35\HtmlAgilityPack.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\..\Platform6\net\packages\Newtonsoft.Json.12.0.2\lib\net20\Newtonsoft.Json.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FileFunction.cs" />
     <Compile Include="TextFunction.cs" />
     <Compile Include="TextAggregate.cs" />
-    <Compile Include="ExecProcedure.cs" />
+    <Compile Include="ExecuteProcedure.cs" />
     <Compile Include="VariableFunction.cs" />
     <Compile Include="SequenceFunction.cs" />
+    <Compile Include="ExcelFunction.cs" />
+    <Compile Include="DownloadFunction.cs" />
+    <Compile Include="RegexFunction.cs" />
+    <Compile Include="HtmlFunction.cs" />
+    <Compile Include="JsonFunction.cs" />
   </ItemGroup>
 </Project>

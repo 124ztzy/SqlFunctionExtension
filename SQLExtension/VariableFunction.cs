@@ -9,61 +9,54 @@ using System.Data.SqlTypes;
 public partial class Function
 {
     //全局变量
-    private static Dictionary<string, object> _variable = new Dictionary<string, object>();
+    private static Dictionary<string, object> _variables = new Dictionary<string, object>();
 
 
     //取值全局变量
     [SqlFunction]
     public static object Variable(string name)
     {
-        if(_variable.TryGetValue(name, out object value))
-        {
+        if(_variables.TryGetValue(name, out object value))
             return value;
-        }
         else
-        {
             return null;
-        }
     }
     //返回文本类型
     [SqlFunction]
     public static string VariableVarchar(string name)
     {
-        if(_variable.TryGetValue(name, out object value))
-        {
+        if(_variables.TryGetValue(name, out object value))
             return value.ToString();
-        }
         else
-        {
             return null;
-        }
     }
     //返回整数类型
     [SqlFunction]
     public static SqlInt64 VariableBigint(string name)
     {
-        if(_variable.TryGetValue(name, out object value))
-        {
+        if(_variables.TryGetValue(name, out object value))
             return Convert.ToInt64(ConvertType(value, null));
-        }
         else
-        {
             return SqlInt64.Null;
-        }
     }
     //返回小数类型
     [SqlFunction]
     [return: SqlFacet(Scale = 6)]
     public static SqlDecimal VariableDecimal(string name)
     {
-        if(_variable.TryGetValue(name, out object value))
-        {
+        if(_variables.TryGetValue(name, out object value))
             return Convert.ToDecimal(ConvertType(value, null));
-        }
         else
-        {
             return SqlDecimal.Null;
-        }
+    }
+    //返回时间类型
+    [SqlFunction]
+    public static SqlDateTime VariableDateTime(string name)
+    {
+        if(_variables.TryGetValue(name, out object value))
+            return Convert.ToDateTime(ConvertType(value, null));
+        else
+            return SqlDateTime.Null;
     }
 
 
@@ -71,16 +64,11 @@ public partial class Function
     [SqlFunction]
     public static object VariableAssign(string name, object value)
     {
-        if(_variable.ContainsKey(name))
-        {
-            _variable[name] = value;
-            return value;
-        }
+        if(_variables.ContainsKey(name))
+            _variables[name] = value;
         else
-        {
-            _variable.Add(name, value);
-            return value;
-        }
+            _variables.Add(name, value);
+        return value;
     }
     //清除全局变量，传null将全部清理
     [SqlFunction]
@@ -88,12 +76,12 @@ public partial class Function
     {
         if(string.IsNullOrEmpty(name))
         {
-            _variable.Clear();
+            _variables.Clear();
             return true;
         }
         else
         {
-            return _variable.Remove(name);
+            return _variables.Remove(name);
         }
     }
 
@@ -102,7 +90,7 @@ public partial class Function
     [SqlFunction(TableDefinition = "variableName nvarchar(max), variableValue nvarchar(max)", FillRowMethodName = "FillVariableViewRow")]
     public static IEnumerable VariableView()
     {
-        return _variable;
+        return _variables;
     }
     public static void FillVariableViewRow(object row, out string variableName, out string variableValue)
     {

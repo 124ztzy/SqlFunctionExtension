@@ -1,9 +1,6 @@
 ﻿using Microsoft.SqlServer.Server;
 using System;
-using System.Collections;
 using System.Data.SqlTypes;
-using System.Text;
-using System.Text.RegularExpressions;
 
 
 //文本函数
@@ -69,163 +66,33 @@ public partial class Function
             return Convert.ChangeType(value1, Type.GetType(className.StartsWith("System.") ? className : "System." + className));
     }
     [SqlFunction]
-    public static string TextFormat(string format, object value0)
+    public static string TextFormat(string format, object value1, object value2, object value3, object value4, object value5)
     {
-        return string.Format(format, ConvertType(value0, null));
-    }
-    [SqlFunction]
-    public static string TextFormat2(string format, object value0, object value1)
-    {
-        return string.Format(format, ConvertType(value0, null), ConvertType(value1, null));
-    }
-    [SqlFunction]
-    public static string TextFormat3(string format, object value0, object value1, object value2)
-    {
-        return string.Format(format, ConvertType(value0, null), ConvertType(value1, null), ConvertType(value2, null));
+        return string.Format(format, ConvertType(value1, null), ConvertType(value2, null), ConvertType(value3, null), ConvertType(value4, null), ConvertType(value5, null));
     }
 
 
-    //将\u十六进制编码转化汉字
-    [SqlFunction]
-    public static string ConvertUnicode(string text)
-    {
-        StringBuilder builder = new StringBuilder();
-        int i = 0;
-        while(i < text.Length)
-        {
-            if(text[i] == '\\' && text[i + 1] == 'u')
-            {
-                int word = Convert.ToInt32(text.Substring(i + 2, 4), 16);
-                builder.Append((char)word);
-                i += 6;
-            }
-            else
-            {
-                builder.Append(text[i]);
-                i++;
-            }
-        }
-        return builder.ToString();
-    }
-
-
-    //正则表达式判断
-    [SqlFunction]
-    public static bool RegexIsMatch(string text, string regex, int option)
-    {
-        return new Regex(regex, (RegexOptions)option).IsMatch(text);
-    }
-    //正则表达式匹配
-    [SqlFunction(TableDefinition = "matchNumber int, groupName nvarchar(max), captureNumber int, captureValue nvarchar(max)", FillRowMethodName = "FillRegexMatchRow")]
-    public static IEnumerable RegexMatch(string text, string regex, int option)
-    {
-        ArrayList list = new ArrayList();
-        Regex reg = new Regex(regex, (RegexOptions)option);
-        string[] groupNames = reg.GetGroupNames();
-        Match match = reg.Match(text);
-        int matchNumber = 0;
-        while(match.Success)
-        {
-            int groupNumber = 0;
-            foreach(Group group in match.Groups)
-            {
-                if(group.Success)
-                {
-                    int captureNumber = 0;
-                    foreach(Capture capture in group.Captures)
-                    {
-                        list.Add(new object[] { matchNumber, groupNames[groupNumber], captureNumber, capture.Value });
-                        captureNumber++;
-                    }
-                }
-                groupNumber++;
-            }
-            match = match.NextMatch();
-            matchNumber++;
-        }
-        return list;
-    }
-    public static void FillRegexMatchRow(object row, out int matchNumber, out string groupName, out int captureNumber, out string captureValue)
-    {
-        object[] cells = (object[])row;
-        matchNumber = (int)cells[0];
-        groupName = (string)cells[1];
-        captureNumber = (int)cells[2];
-        captureValue = (string)cells[3];
-    }
-    //正则表达式替换
-    [SqlFunction]
-    public static string RegexReplace(string text, string regex, string final, int option)
-    {
-        return new Regex(regex, (RegexOptions)option).Replace(text, final);
-    }
-    //正则表达式拆分
-    [SqlFunction(TableDefinition = "rowNumber int, splitValue nvarchar(max)", FillRowMethodName = "FillRegexSplitRow")]
-    public static IEnumerable RegexSplit(string text, string rowSplit, int option)
-    {
-        ArrayList list = new ArrayList();
-        Regex rowReg = new Regex(rowSplit, (RegexOptions)option);
-        int lineNumber = 0;
-        foreach(string item in rowReg.Split(text))
-        {
-            list.Add(new object[] { lineNumber, item });
-            lineNumber++;
-        }
-        return list;
-    }
-    public static void FillRegexSplitRow(object row, out int rowNumber, out string splitValue)
-    {
-        object[] cells = (object[])row;
-        rowNumber = (int)cells[0];
-        splitValue = (string)cells[1];
-    }
-    //正则表达式拆分表格
-    [SqlFunction(TableDefinition = "rowNumber int, columnNumber int, splitValue nvarchar(max)", FillRowMethodName = "FillRegexSplitTableRow")]
-    public static IEnumerable RegexSplitTable(string text, string rowSplit, string columnSplit, int option)
-    {
-        ArrayList list = new ArrayList();
-        Regex rowReg = new Regex(rowSplit, (RegexOptions)option);
-        Regex columnReg = new Regex(columnSplit, (RegexOptions)option);
-        int rowNumber = 0;
-        foreach(string row in rowReg.Split(text))
-        {
-            int columnNumber = 0;
-            foreach(string column in columnReg.Split(row))
-            {
-                list.Add(new object[] { rowNumber, columnNumber, column });
-                columnNumber++;
-            }
-            rowNumber++;
-        }
-        return list;
-    }
-    public static void FillRegexSplitTableRow(object row, out int rowNumber, out int columnNumber, out string splitValue)
-    {
-        object[] cells = (object[])row;
-        rowNumber = (int)cells[0];
-        columnNumber = (int)cells[1];
-        splitValue = (string)cells[2];
-    }
-
-
-    //Json匹配语句
-    [SqlFunction]
-    public static string JsonRegex(string fields, bool useGroupName)
-    {
-        StringBuilder builder = new StringBuilder();
-        foreach(string field in fields.Split(',', ' '))
-        {
-            if(!string.IsNullOrEmpty(field))
-            {
-                if(builder.Length > 0)
-                    builder.Append(",.*?");
-                if(useGroupName)
-                    builder.Append("\"" + field + "\"\\s*:\\s*" + "(?:\"(?<" + field + ">[^\"]*?)\"|(?<" + field + ">[\\d\\.\\+\\-eE]+|true|false|null))");
-                else
-                    builder.Append("\"" + field + "\"\\s*:\\s*" + "(?:\"([^\"]*?)\"|([\\d\\.\\+\\-eE]+|true|false|null))");
-            }
-        }
-        return builder.ToString();
-    }
+    ////将\u十六进制编码转化汉字
+    //[SqlFunction]
+    //public static string ConvertUnicode(string text)
+    //{
+    //    StringBuilder builder = new StringBuilder();
+    //    int i = 0;
+    //    while(i < text.Length)
+    //    {
+    //        if(text[i] == '\\' && text[i + 1] == 'u')
+    //        {
+    //            int word = Convert.ToInt32(text.Substring(i + 2, 4), 16);
+    //            builder.Append((char)word);
+    //            i += 6;
+    //        }
+    //        else
+    //        {
+    //            builder.Append(text[i]);
+    //            i++;
+    //        }
+    //    }
+    //    return builder.ToString();
+    //}
 
 }

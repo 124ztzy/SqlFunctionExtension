@@ -1,10 +1,9 @@
 ﻿using Microsoft.SqlServer.Server;
-using System.IO;
-using System.Net;
-using System.Text;
 using System;
 using System.Collections;
-using System.Diagnostics;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
 
 
 //文件函数
@@ -48,12 +47,6 @@ public static partial class Function
     //}
 
 
-    //文件长度，文件不存在返回-1
-    [SqlFunction]
-    public static bool FileExist(string path)
-    {
-        return File.Exists(path);
-    }
     //文件长度，文件不存在返回-1
     [SqlFunction]
     public static long FileSize(string path)
@@ -117,35 +110,6 @@ public static partial class Function
     }
 
 
-    //文件列表，lastList传空即可
-    [SqlFunction(TableDefinition = "fullPath nvarchar(max), fileName nvarchar(max), isDirectory bit, fileSize bigint, lastWirteTime datetime", FillRowMethodName = "FillFileTreeRow")]
-    public static IEnumerable FileTree(string path, bool isRecurve, object lastList)
-    {
-        ArrayList list = lastList == null || lastList == DBNull.Value ? new ArrayList() : (ArrayList)lastList;
-        DirectoryInfo directory = new DirectoryInfo(path);
-        foreach(DirectoryInfo child in directory.GetDirectories())
-        {
-            list.Add(new object[] { child.FullName, child.Name, true, 0L, child.LastWriteTime });
-            if(isRecurve)
-                FileTree(child.FullName, isRecurve, list);
-        }
-        foreach(FileInfo child in directory.GetFiles())
-        {
-            list.Add(new object[] { child.FullName, child.Name, false, child.Length, child.LastWriteTime });
-        }
-        return list;
-    }
-    public static void FillFileTreeRow(object row, out string fullPath, out string fileName, out bool isDirectory, out long fileSize, out DateTime lastWirteTime)
-    {
-        object[] cells = (object[])row;
-        fullPath = (string)cells[0];
-        fileName = (string)cells[1];
-        isDirectory = (bool)cells[2];
-        fileSize = (long)cells[3];
-        lastWirteTime = (DateTime)cells[4];
-    }
-
-
     //读取文本，默认utf-8编码
     [SqlFunction]
     public static string FileRead(string path, string encoding)
@@ -159,63 +123,42 @@ public static partial class Function
         FileInfo file = new FileInfo(path);
         if(!file.Directory.Exists)
             file.Directory.Create();
-        byte[] data = string.IsNullOrEmpty(encoding) ? Encoding.UTF8.GetBytes(content) : Encoding.GetEncoding(encoding).GetBytes(content);
+        byte[] data = (string.IsNullOrEmpty(encoding) ? Encoding.UTF8 : Encoding.GetEncoding(encoding)).GetBytes(content);
         File.WriteAllBytes(path, data);
         return data.LongLength;
     }
 
 
-    //下载文件
-    [SqlFunction]
-    public static long DownloadFile(string url, string referer, string postParam, string savePath)
+    //文件列表
+    [SqlFunction(TableDefinition = "fullPath nvarchar(max), fileName nvarchar(max), fileExtension nvarchar(max), isDirectory bit, fileSize bigint, lastWirteTime datetime", FillRowMethodName = "FillFileTreeRow")]
+    public static IEnumerable FileTree(string path, bool isRecurve)
     {
-        FileInfo file = new FileInfo(savePath);
-        if(!file.Directory.Exists)
-            file.Directory.Create();
-        WebClient webClient = new WebClient();
-        webClient.Headers["Referer"] = referer;
-        byte[] data = string.IsNullOrEmpty(postParam) ? webClient.DownloadData(url) : webClient.UploadData(url, Encoding.UTF8.GetBytes(postParam));
-        File.WriteAllBytes(savePath, data);
-        return data.LongLength;
+        return FileTree(path, isRecurve, new List<object[]>(8192));
     }
-    //下载文件并缓存，文件写入时间超出过期时间将重新下载
-    [SqlFunction]
-    public static long DownloadFileCache(string url, string referer, string postParam, string savePath, TimeSpan dueTime)
+    public static IEnumerable FileTree(string path, bool isRecurve, List<object[]> list)
     {
-        FileInfo file = new FileInfo(savePath);
-        if(file.Exists && (DateTime.Now - file.LastWriteTime) < dueTime)
-            return file.Length;
-        else
-            return DownloadFile(url, referer, postParam, savePath);
-    }
-    //下载文本
-    [SqlFunction]
-    public static string DownloadText(string url, string referer, string postParam, string encoding)
-    {
-        WebClient webClient = new WebClient();
-        webClient.Headers["Referer"] = referer;
-        webClient.Encoding = string.IsNullOrEmpty(encoding) ? Encoding.UTF8 : Encoding.GetEncoding(encoding);
-        if(string.IsNullOrEmpty(postParam))
-            return webClient.DownloadString(url);
-        else
-            return webClient.UploadString(url, postParam);
-    }
-    //下载文本并缓存，文件写入时间超出过期时间将重新下载
-    [SqlFunction]
-    public static string DownloadTextCache(string url, string referer, string postParam, string encoding, string savePath, TimeSpan dueTime)
-    {
-        FileInfo file = new FileInfo(savePath);
-        if(file.Exists && (DateTime.Now - file.LastWriteTime) < dueTime)
+        DirectoryInfo directory = new DirectoryInfo(path);
+        foreach(DirectoryInfo child in directory.GetDirectories())
         {
-            return File.ReadAllText(savePath);
+            list.Add(new object[] { child.FullName, child.Name, null, true, 0L, child.LastWriteTime });
+            if(isRecurve)
+                FileTree(child.FullName, isRecurve, list);
         }
-        else
+        foreach(FileInfo child in directory.GetFiles())
         {
-            string content = DownloadText(url, referer, postParam, encoding);
-            if(!file.Directory.Exists)
-                file.Directory.Create();
-            File.WriteAllText(savePath, content);
-            return content;
+            list.Add(new object[] { child.FullName, child.Name, child.Extension, false, child.Length, child.LastWriteTime });
         }
+        return list;
     }
+    public static void FillFileTreeRow(object row, out string fullPath, out string fileName, out string fileExtension, out bool isDirectory, out long fileSize, out DateTime lastWirteTime)
+    {
+        object[] cells = (object[])row;
+        fullPath = (string)cells[0];
+        fileName = (string)cells[1];
+        fileExtension = (string)cells[2];
+        isDirectory = (bool)cells[3];
+        fileSize = (long)cells[4];
+        lastWirteTime = (DateTime)cells[5];
+    }
+    
 }
