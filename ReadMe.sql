@@ -1,5 +1,8 @@
-﻿
---使用C#扩展Sql Server函数，下面是一些常见函数使用示例
+--向Sql Server添加C#函数扩展
+--1. 开启数据库不信任程序集，ALTER DATABASE [Test] SET TRUSTWORTHY ON 
+--2. 在数据库管理器中可编程性》程序集》添加，添加bin\debug\下的所有dll
+--3. 执行bin\debug\下SQLExtension_Create.sql挑选需要创建的函数执行创建。
+--下面是一些常见函数使用示例
 
 
 --1. 序列表
