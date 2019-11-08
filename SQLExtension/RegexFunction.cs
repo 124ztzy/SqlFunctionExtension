@@ -9,52 +9,45 @@ public partial class Function
 {
     //正则表达式判断
     [SqlFunction]
-    public static bool RegexIsMatch(string text, string regex, int option)
+    public static bool RegexIsMatch(string text, string regex, int? option)
     {
-        Regex reg = new Regex(regex, (RegexOptions)option);
+        Regex reg = new Regex(regex, option == null ? RegexOptions.None : (RegexOptions)option);
         return reg.IsMatch(text);
     }
     //正则表达式替换
     [SqlFunction]
-    public static string RegexReplace(string text, string regex, string final, int option)
+    public static string RegexReplace(string text, string regex, string final, int? option)
     {
-        return new Regex(regex, (RegexOptions)option).Replace(text, final);
+        return new Regex(regex, option == null ? RegexOptions.None : (RegexOptions)option).Replace(text, final);
     }
 
 
     //正则表达式拆分表格
-    [SqlFunction(TableDefinition = "rowNumber int, columnNumber int, cellValue nvarchar(max)", FillRowMethodName = "FillRegexSplitRow")]
-    public static IEnumerable RegexSplit(string text, string rowSplit, string columnSplit, int option)
+    [SqlFunction(TableDefinition = CellTableDefinition, FillRowMethodName = CellTableFillRowMethod)]
+    public static IEnumerable RegexSplit(string text, string rowSplit, string columnSplit, int? option)
     {
-        List<object[]> list = new List<object[]>(8192);
-        Regex rowReg = new Regex(rowSplit, (RegexOptions)option);
-        Regex columnReg = new Regex(columnSplit, (RegexOptions)option);
+        LinkedList<object[]> result = new LinkedList<object[]>();
+        Regex rowReg = new Regex(rowSplit, option == null ? RegexOptions.None : (RegexOptions)option);
+        Regex columnReg = new Regex(columnSplit, option == null ? RegexOptions.None : (RegexOptions)option);
         int r = 0;
         foreach(string row in rowReg.Split(text))
         {
             int c = 0;
             foreach(string column in columnReg.Split(row))
             {
-                list.Add(new object[] { r, c, column });
+                result.AddLast(new object[] { null, r, c, GetString(column) });
                 c++;
             }
             r++;
         }
-        return list;
-    }
-    public static void FillRegexSplitRow(object row, out int rowNumber, out int columnNumber, out string cellValue)
-    {
-        object[] cells = (object[])row;
-        rowNumber = (int)cells[0];
-        columnNumber = (int)cells[1];
-        cellValue = (string)cells[2];
+        return result;
     }
     //正则表达式匹配
-    [SqlFunction(TableDefinition = "matchNumber int, groupName nvarchar(max), captureNumber int, cellValue nvarchar(max)", FillRowMethodName = "FillRegexMatchRow")]
-    public static IEnumerable RegexMatch(string text, string regex, int option)
+    [SqlFunction(TableDefinition = CellTableDefinition, FillRowMethodName = CellTableFillRowMethod)]
+    public static IEnumerable RegexMatch(string text, string regex, int? option)
     {
-        List<object[]> list = new List<object[]>(8192);
-        Regex reg = new Regex(regex, (RegexOptions)option);
+        LinkedList<object[]> result = new LinkedList<object[]>();
+        Regex reg = new Regex(regex, option == null ? RegexOptions.None : (RegexOptions)option);
         Match match = reg.Match(text);
         string[] groupNames = reg.GetGroupNames();
         int m = 0;
@@ -65,27 +58,20 @@ public partial class Function
             {
                 if(group.Success)
                 {
-                    int c = 0;
-                    foreach(Capture capture in group.Captures)
-                    {
-                        list.Add(new object[] { m, groupNames[g], c, capture.Value });
-                        c++;
-                    }
+                    result.AddLast(new object[] { null, m, groupNames[g], GetString(group.Value) });
+                    //int c = 0;
+                    //foreach(Capture capture in group.Captures)
+                    //{
+                    //    result.Add(new object[] { m, groupNames[g], c, GetString(capture.Value) });
+                    //    c++;
+                    //}
                 }
                 g++;
             }
             match = match.NextMatch();
             m++;
         }
-        return list;
-    }
-    public static void FillRegexMatchRow(object row, out int matchNumber, out string groupName, out int captureNumber, out string cellValue)
-    {
-        object[] cells = (object[])row;
-        matchNumber = (int)cells[0];
-        groupName = (string)cells[1];
-        captureNumber = (int)cells[2];
-        cellValue = (string)cells[3];
+        return result;
     }
     
 

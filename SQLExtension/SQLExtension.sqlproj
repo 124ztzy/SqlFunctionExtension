@@ -93,5 +93,6 @@
     <Compile Include="RegexFunction.cs" />
     <Compile Include="HtmlFunction.cs" />
     <Compile Include="JsonFunction.cs" />
+    <Compile Include="CellFunction.cs" />
   </ItemGroup>
 </Project>

@@ -32,31 +32,31 @@ public partial class Function
     }
     //返回整数类型
     [SqlFunction]
-    public static SqlInt64 VariableBigint(string name)
+    public static long? VariableBigint(string name)
     {
         if(_variables.TryGetValue(name, out object value))
             return Convert.ToInt64(ConvertType(value, null));
         else
-            return SqlInt64.Null;
+            return null;
     }
     //返回小数类型
     [SqlFunction]
-    [return: SqlFacet(Scale = 6)]
-    public static SqlDecimal VariableDecimal(string name)
+    [return: SqlFacet(Precision = 22, Scale = 6)]
+    public static decimal? VariableDecimal(string name)
     {
         if(_variables.TryGetValue(name, out object value))
             return Convert.ToDecimal(ConvertType(value, null));
         else
-            return SqlDecimal.Null;
+            return null;
     }
     //返回时间类型
     [SqlFunction]
-    public static SqlDateTime VariableDateTime(string name)
+    public static DateTime? VariableDateTime(string name)
     {
         if(_variables.TryGetValue(name, out object value))
             return Convert.ToDateTime(ConvertType(value, null));
         else
-            return SqlDateTime.Null;
+            return null;
     }
 
 

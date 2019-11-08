@@ -130,35 +130,34 @@ public static partial class Function
 
 
     //文件列表
-    [SqlFunction(TableDefinition = "fullPath nvarchar(max), fileName nvarchar(max), fileExtension nvarchar(max), isDirectory bit, fileSize bigint, lastWirteTime datetime", FillRowMethodName = "FillFileTreeRow")]
+    [SqlFunction(TableDefinition = "fullPath nvarchar(max), fileName nvarchar(max), fileExtension nvarchar(max), fileSize bigint, lastWirteTime datetime", FillRowMethodName = "FillFileTreeRow")]
     public static IEnumerable FileTree(string path, bool isRecurve)
     {
-        return FileTree(path, isRecurve, new List<object[]>(8192));
+        return FileTreeRecurve(path, isRecurve, new LinkedList<object[]>());
     }
-    public static IEnumerable FileTree(string path, bool isRecurve, List<object[]> list)
+    public static IEnumerable FileTreeRecurve(string path, bool isRecurve, LinkedList<object[]> list)
     {
         DirectoryInfo directory = new DirectoryInfo(path);
         foreach(DirectoryInfo child in directory.GetDirectories())
         {
-            list.Add(new object[] { child.FullName, child.Name, null, true, 0L, child.LastWriteTime });
+            list.AddLast(new object[] { child.FullName, child.Name, null, null, child.LastWriteTime });
             if(isRecurve)
-                FileTree(child.FullName, isRecurve, list);
+                FileTreeRecurve(child.FullName, isRecurve, list);
         }
         foreach(FileInfo child in directory.GetFiles())
         {
-            list.Add(new object[] { child.FullName, child.Name, child.Extension, false, child.Length, child.LastWriteTime });
+            list.AddLast(new object[] { child.FullName, child.Name.Substring(0, child.Name.LastIndexOf('.')), child.Extension, child.Length, child.LastWriteTime });
         }
         return list;
     }
-    public static void FillFileTreeRow(object row, out string fullPath, out string fileName, out string fileExtension, out bool isDirectory, out long fileSize, out DateTime lastWirteTime)
+    public static void FillFileTreeRow(object row, out string fullPath, out string fileName, out string fileExtension, out long? fileSize, out DateTime lastWirteTime)
     {
         object[] cells = (object[])row;
         fullPath = (string)cells[0];
         fileName = (string)cells[1];
         fileExtension = (string)cells[2];
-        isDirectory = (bool)cells[3];
-        fileSize = (long)cells[4];
-        lastWirteTime = (DateTime)cells[5];
+        fileSize = (long?)cells[3];
+        lastWirteTime = (DateTime)cells[4];
     }
     
 }

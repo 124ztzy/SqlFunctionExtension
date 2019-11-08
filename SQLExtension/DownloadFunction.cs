@@ -17,7 +17,11 @@ public static partial class Function
             file.Directory.Create();
         WebClient webClient = new WebClient();
         webClient.Headers["Referer"] = referer;
-        byte[] data = string.IsNullOrEmpty(postParam) ? webClient.DownloadData(url) : webClient.UploadData(url, Encoding.UTF8.GetBytes(postParam));
+        byte[] data = null;
+        if(string.IsNullOrEmpty(postParam))
+            data = webClient.DownloadData(url);
+        else
+            data = webClient.UploadData(url, Encoding.UTF8.GetBytes(postParam));
         File.WriteAllBytes(savePath, data);
         return data.LongLength;
     }

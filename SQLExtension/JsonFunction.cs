@@ -7,31 +7,50 @@ using System.Collections.Generic;
 public partial class Function
 {
     //Json路径提取函数
-    [SqlFunction(TableDefinition = "rowNumber int, columnName nvarchar(max), cellValue nvarchar(max)", FillRowMethodName = "FillJsonPathRow")]
-    public static IEnumerable JsonPath(string text, string locationPath, string extractPaths)
+    [SqlFunction(TableDefinition = CellTableDefinition, FillRowMethodName = CellTableFillRowMethod)]
+    public static IEnumerable JsonPath(string text, string groupPath, string columnPaths)
     {
-        List<object[]> result = new List<object[]>(8192);
-        JToken root = JToken.Parse(text);
-        if(!string.IsNullOrEmpty(locationPath))
-            root = root.SelectToken(locationPath);
-        foreach(string path in extractPaths.Split(','))
+        LinkedList<object[]> result = new LinkedList<object[]>();
+        JToken json = JToken.Parse(text);
+        //定位分组节点
+        IEnumerable<JToken> rows = null;
+        if(string.IsNullOrEmpty(groupPath))
         {
-            string jpath = path.Trim();
+            rows = new List<JToken>(1) { json };
+        }
+        else
+        {
+            rows = json.SelectTokens(groupPath);
+        }
+        //提取子节点
+        if(string.IsNullOrEmpty(columnPaths))
+        {
             int r = 0;
-            foreach(JToken token in root.SelectTokens(jpath))
+            foreach(JToken row in rows)
             {
-                result.Add(new object[] { r, jpath, token.ToString() });
+                result.AddLast(new object[] { null, r, null, GetString(row) });
                 r++;
             }
         }
+        else
+        {
+            foreach(string path in columnPaths.Split(','))
+            {
+                string jpath = path.Trim();
+                int r = 0;
+                foreach(JToken row in rows)
+                {
+                    int c = 0;
+                    foreach(JToken token in row.SelectTokens(jpath))
+                    {
+                        result.AddLast(new object[] { null, r, jpath, GetString(token) });
+                        c++;
+                    }
+                    r++;
+                }   
+            }
+        }
         return result;
-    }
-    public static void FillJsonPathRow(object row, out int rowNumber, out string columnName, out string cellValue)
-    {
-        object[] cells = (object[])row;
-        rowNumber = (int)cells[0];
-        columnName = (string)cells[1];
-        cellValue = (string)cells[2];
     }
 
 }
