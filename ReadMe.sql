@@ -1,5 +1,8 @@
-﻿
---使用C#扩展Sql Server函数，下面是一些常见函数使用示例
+--向Sql Server添加C#函数扩展
+--1. 开启数据库不信任程序集，ALTER DATABASE [Test] SET TRUSTWORTHY ON 
+--2. 在数据库管理器中可编程性》程序集》添加，添加bin\debug\下的所有dll
+--3. 执行bin\debug\下SQLExtension_Create.sql挑选需要创建的函数执行创建。
+--下面是一些常见函数使用示例
 
 
 --1. 序列表
@@ -49,7 +52,7 @@ from dbo.RegexMatch(
 	 dbo.JsonRegex('FSRQ, DWJZ, LJJZ', 0),
 	 0
 ) as t1
-pivot (max(captureValue) for groupName in ([1],[3],[5])) as t2
+pivot (max(cellValue) for groupName in ([1],[3],[5])) as t2
 
 
 --下载中证央企指数样本，下载一次后，12小时内调用将不再下载
@@ -65,7 +68,7 @@ select dbo.DownloadFileCache(
 --需要添加程序集ICSharpCode.SharpZipLib.dll、ExcelDataReader.dll
 select [0] as tradeDate, [1] as indexCode, [2] as indexName, [4] as stockCode, [5] as stockName
 from dbo.ExcelRead('\\192.168.1.34\database\中证指数\000926cons2.xls') as t1
-pivot (max(cellValue) for columnNumber in ([0],[1],[2],[3],[4],[5],[6],[7])) as t2
+pivot (max(cellValue) for columnName in ([0],[1],[2],[3],[4],[5],[6],[7])) as t2
 where [0] != '日期Date'
 --可用OLEDB驱动代替
 select * 
@@ -110,7 +113,7 @@ order by tradeDate
 
 
 									      
---5. 调用C#反射函数
+--5. 调用C#反射函数（已废除）
 --执行反射方法，格式化字符串
 exec dbo.ExecuteReflection 
 	'System.String', 
