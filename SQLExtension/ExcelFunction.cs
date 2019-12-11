@@ -13,22 +13,24 @@ public partial class Function
     public static IEnumerable ExcelFile(string path)
     {
         LinkedList<object[]> result = new LinkedList<object[]>();
-        FileStream file = new FileStream(path, FileMode.Open);
-        IExcelDataReader reader = ExcelReaderFactory.CreateReader(file);
-        do
+        using(FileStream file = new FileStream(path, FileMode.Open))
         {
-            int r = 0;
-            while(reader.Read())
+            IExcelDataReader reader = ExcelReaderFactory.CreateReader(file);
+            do
             {
-                for(int c = 0; c < reader.FieldCount; c++)
+                int r = 0;
+                while(reader.Read())
                 {
-                    result.AddLast(new object[] { reader.Name, r, c, GetString(reader.GetValue(c)) });
+                    for(int c = 0; c < reader.FieldCount; c++)
+                    {
+                        result.AddLast(new object[] { reader.Name, r, c, GetString(reader.GetValue(c)) });
+                    }
+                    r++;
                 }
-                r++;
-            }
-        } while(reader.NextResult());
-        reader.Close();
-        file.Close();
+            } while(reader.NextResult());
+            reader.Close();
+            file.Close();
+        }
         return result;
     }
 

@@ -1,8 +1,7 @@
 ﻿using Microsoft.SqlServer.Server;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System;
-using System.Data.SqlTypes;
 
 
 //全局变量函数

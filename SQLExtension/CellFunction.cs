@@ -2,6 +2,7 @@
 using Microsoft.SqlServer.Server;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Data.SqlTypes;
 
 
 //填充单元格函数
@@ -71,7 +72,7 @@ public partial class Function
         {
             //将(char)160空格替换成正常空格
             string text = value.ToString().Replace(' ', ' ').Trim();
-            if(text == "" || text == "-" || text == "-%")
+            if(text == "" || text == "-" || text == "-%" || text == "--")
             {
                 return null;
             }
