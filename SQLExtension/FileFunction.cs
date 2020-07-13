@@ -130,7 +130,7 @@ public static partial class Function
 
 
     //文件列表
-    [SqlFunction(TableDefinition = "fullPath nvarchar(max), fileName nvarchar(max), fileExtension nvarchar(max), fileSize bigint, lastWirteTime datetime", FillRowMethodName = "FillFileTreeRow")]
+    [SqlFunction(TableDefinition = "fullPath nvarchar(max), fileName nvarchar(max), fileExtension nvarchar(max), fileSize bigint, createTime datetime, lastWirteTime datetime", FillRowMethodName = "FillFileTreeRow")]
     public static IEnumerable FileTree(string path, bool isRecurve)
     {
         return FileTreeRecurve(path, isRecurve, new LinkedList<object[]>());
@@ -140,24 +140,25 @@ public static partial class Function
         DirectoryInfo directory = new DirectoryInfo(path);
         foreach(DirectoryInfo child in directory.GetDirectories())
         {
-            list.AddLast(new object[] { child.FullName, child.Name, null, null, child.LastWriteTime });
+            list.AddLast(new object[] { child.FullName, child.Name, null, null, child.CreationTime, child.LastWriteTime });
             if(isRecurve)
                 FileTreeRecurve(child.FullName, isRecurve, list);
         }
         foreach(FileInfo child in directory.GetFiles())
         {
-            list.AddLast(new object[] { child.FullName, child.Name.Substring(0, child.Name.LastIndexOf('.')), child.Extension, child.Length, child.LastWriteTime });
+            list.AddLast(new object[] { child.FullName, child.Name.Substring(0, child.Name.LastIndexOf('.')), child.Extension, child.Length, child.CreationTime, child.LastWriteTime });
         }
         return list;
     }
-    public static void FillFileTreeRow(object row, out string fullPath, out string fileName, out string fileExtension, out long? fileSize, out DateTime lastWirteTime)
+    public static void FillFileTreeRow(object row, out string fullPath, out string fileName, out string fileExtension, out long? fileSize, out DateTime createTime, out DateTime lastWirteTime)
     {
         object[] cells = (object[])row;
         fullPath = (string)cells[0];
         fileName = (string)cells[1];
         fileExtension = (string)cells[2];
         fileSize = (long?)cells[3];
-        lastWirteTime = (DateTime)cells[4];
+        createTime = (DateTime)cells[4];
+        lastWirteTime = (DateTime)cells[5];
     }
     
 }

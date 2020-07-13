@@ -7,7 +7,7 @@ using System.Text;
 //文本聚合函数
 [Serializable]
 [SqlUserDefinedAggregate(Format.UserDefined, MaxByteSize = 8000)]
-public struct TextAggregate : IBinarySerialize
+public struct Splice : IBinarySerialize
 {
     //初始化
     public void Init()
@@ -22,7 +22,7 @@ public struct TextAggregate : IBinarySerialize
         _str.Append(value);
     }
     //多组合并
-    public void Merge(TextAggregate group)
+    public void Merge(Splice group)
     {
         _str.Append(group._str);
     }
@@ -47,3 +47,5 @@ public struct TextAggregate : IBinarySerialize
     //文本聚合
     private StringBuilder _str;
 }
+
+

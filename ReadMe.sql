@@ -7,18 +7,18 @@
 --1. Html处理，Html处理有两个表函数，都是通过xpath来提取节点
 --dbo.HtmlTable 表节点提取函数，可用于提取文档中<table></table>节点内容，支持td中的rowspan，colspan跨行
 --dbo.HtmlTable(@text nvarchar(max), @tablesPath nvarchar(max), @isTranspose bit, @rowHeader nvarchar(max))
---  @text        需要解析的Html文本。如果传入null，则代表使用上一次解析的html文档，这样避免重复解析，关于此处的现实，可参看下面缓存变量。
+--  @text        需要解析的Html文本。如果传入null，则代表使用上一次解析的html文档，这样避免重复解析，关于此处的实现，可参看下面变量缓存。
 --  @tablesPath  提取<table></table>节点xpath路径，可支持多个table路径提取。
 --  @isTranspose 是否发生转置，即行列互换，传null不转置
 --  @rowHeader   哪一行作为表头，传null无表头
---表函数返回下述结构的表（由于函数无法返回动态的表结构，因此用下述结构来实现动态表）
+--由于函数无法返回动态的表结构，因此用下述结构来实现动态表
 create table #temp (
 	tableName nvarchar(max) NULL,  --表名，多张表时为表序号或表xpath
 	rowName nvarchar(max) NULL,    --行名，一般为行序号
 	columnName nvarchar(max) NULL, --列名，列序号，或者指定的行作为列名（由@rowHeader参数指定）
 	cellValue nvarchar(max) NULL   --单元格值
 )
---上述表仅返回了几行几列值为多少，可进行透视pivot操作以方便观察
+--上述表仅返回了第几行第几列值为多少，可进行透视pivot以方便查看
 select *
 from dbo.HtmlTable(
 	dbo.DownloadText('http://eid.csrc.gov.cn/xbrl/REPORT/HTML/2019/FB030030/CN_50350000_000003_FB030030_20190006/CN_50350000_000003_FB030030_20190006.html', null, null, null),
@@ -27,7 +27,7 @@ from dbo.HtmlTable(
 	null
 ) as t
 pivot(max(cellvalue) for columnName in ([0], [1], [2])) as t
---执行转置，并指定表头将更容易查看
+--添加转置，并指定表头将更容易查看
 select *
 from dbo.HtmlTable(
 	null,
