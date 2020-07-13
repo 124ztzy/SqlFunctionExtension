@@ -1,9 +1,39 @@
---通过以下步骤向Sql Server添加C#函数扩展
+--通过以下步骤向Sql Server添加C#函数扩展，主要扩展的表函数、标量函数、聚合函数，已扩充Sql语句的功能。
+--添加的功能有文件操作、网络下载、Excel读取、Html路径提取、Json路径提取、正则表达式、全局变量等。
+
+--一、准备步骤
 --1. 开启数据库不信任程序集，ALTER DATABASE [Test] SET TRUSTWORTHY ON 
---2. 在数据库管理器中可编程性》程序集》添加，添加bin\debug\下的所有dll
+--2. 在数据库管理器中可编程性》程序集》添加，添加bin\debug\下的所有dll，注意有添加顺序，按报错的顺序添加。
 --3. 执行bin\debug\下SQLExtension_Create.sql挑选需要创建的函数执行创建。
 
---下面是一些常见函数使用介绍
+--二、文件操作相关
+--1. 文件大小，文件移动、复制、删除
+select dbo.FileSize('文件路径')
+select dbo.FileMove('文件路径', '移动到路径')
+select dbo.FileCopy('文件路径', '复制到路径')
+select dbo.FileDelete('文件路径')
+--2. 文本读取、文本写入
+select dbo.FileRead('文件路径', '编码格式，null为默认utf8')
+select dbo.FileWirte('文件路径', '待写入文本', '编码格式，null为默认utf8')
+--3. 目录树读取
+select * from dbo.FileTree('目录路径', '是否递归读取子目录')
+--返回表格式
+create table #temp (
+	fullPath nvarchar(max), --完整路径
+	fileName nvarchar(max), --文件名或目录名
+	fileExtension nvarchar(max), --文件扩展名
+	fileSize bigint, --文件大小
+	createTime datetime, --创建时间
+	lastWirteTime datetime -- 最后写入时间
+)
+--4. 目录压缩、解压
+
+
+--三、网络下载
+
+--四、Excel读取
+
+--五、Html路径提取
 --1. Html处理，Html处理有两个表函数，都是通过xpath来提取节点
 --dbo.HtmlTable 表节点提取函数，可用于提取文档中<table></table>节点内容，支持td中的rowspan，colspan跨行
 --dbo.HtmlTable(@text nvarchar(max), @tablesPath nvarchar(max), @isTranspose bit, @rowHeader nvarchar(max))
@@ -36,5 +66,12 @@ from dbo.HtmlTable(
 	'0'
 ) as t
 pivot(max(cellvalue) for columnName in ([基金简称], [基金主代码], [下属2级基金的基金简称], [下属2级基金的交易代码])) as t
+
+
+--六、Json路径提取
+
+--七、正则表达式
+
+--八、全局变量
 
 --未完待续
