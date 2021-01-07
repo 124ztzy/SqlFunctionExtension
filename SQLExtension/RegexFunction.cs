@@ -8,34 +8,35 @@ using System.Text.RegularExpressions;
 public partial class Function
 {
     //正则表达式判断
-    [SqlFunction]
-    public static bool RegexIsMatch(string text, string regex, int? option)
+    [SqlFunction(IsDeterministic = true)]
+    public static bool RegexIsMatch(string text, string regex)
     {
-        Regex reg = new Regex(regex, option == null ? RegexOptions.None : (RegexOptions)option);
+        Regex reg = new Regex(regex);
         return reg.IsMatch(text);
     }
     //正则表达式替换
-    [SqlFunction]
-    public static string RegexReplace(string text, string regex, string final, int? option)
+    [SqlFunction(IsDeterministic = true)]
+    public static string RegexReplace(string text, string regex, string final)
     {
-        return new Regex(regex, option == null ? RegexOptions.None : (RegexOptions)option).Replace(text, final);
+        Regex reg = new Regex(regex);
+        return reg.Replace(text, final);
     }
 
 
     //正则表达式拆分表格
-    [SqlFunction(TableDefinition = CellTableDefinition, FillRowMethodName = CellTableFillRowMethod)]
-    public static IEnumerable RegexSplit(string text, string rowSplit, string columnSplit, int? option)
+    [SqlFunction(IsDeterministic = true, TableDefinition = CellTableDefinition, FillRowMethodName = CellTableFillRowMethod)]
+    public static IEnumerable RegexSplit(string text, string rowSplit, string columnSplit)
     {
         LinkedList<object[]> result = new LinkedList<object[]>();
-        Regex rowReg = new Regex(rowSplit, option == null ? RegexOptions.None : (RegexOptions)option);
-        Regex columnReg = new Regex(columnSplit, option == null ? RegexOptions.None : (RegexOptions)option);
+        Regex rowReg = new Regex(rowSplit);
+        Regex columnReg = new Regex(columnSplit);
         int r = 0;
         foreach(string row in rowReg.Split(text))
         {
             int c = 0;
             foreach(string column in columnReg.Split(row))
             {
-                result.AddLast(new object[] { null, r, c, GetString(column) });
+                result.AddLast(new object[] { null, r, c, GetText(column) });
                 c++;
             }
             r++;
@@ -43,11 +44,11 @@ public partial class Function
         return result;
     }
     //正则表达式匹配
-    [SqlFunction(TableDefinition = CellTableDefinition, FillRowMethodName = CellTableFillRowMethod)]
-    public static IEnumerable RegexMatch(string text, string regex, int? option)
+    [SqlFunction(IsDeterministic = true, TableDefinition = CellTableDefinition, FillRowMethodName = CellTableFillRowMethod)]
+    public static IEnumerable RegexMatch(string text, string regex)
     {
         LinkedList<object[]> result = new LinkedList<object[]>();
-        Regex reg = new Regex(regex, option == null ? RegexOptions.None : (RegexOptions)option);
+        Regex reg = new Regex(regex);
         Match match = reg.Match(text);
         string[] groupNames = reg.GetGroupNames();
         int m = 0;
@@ -58,7 +59,7 @@ public partial class Function
             {
                 if(group.Success)
                 {
-                    result.AddLast(new object[] { null, m, groupNames[g], GetString(group.Value) });
+                    result.AddLast(new object[] { null, m, groupNames[g], GetText(group.Value) });
                     //int c = 0;
                     //foreach(Capture capture in group.Captures)
                     //{
@@ -73,26 +74,5 @@ public partial class Function
         }
         return result;
     }
-    
-
-    ////Json匹配语句
-    //[SqlFunction]
-    //public static string JsonRegex(string fields, bool useGroupName)
-    //{
-    //    StringBuilder builder = new StringBuilder();
-    //    foreach(string field in fields.Split(',', ' '))
-    //    {
-    //        if(!string.IsNullOrEmpty(field))
-    //        {
-    //            if(builder.Length > 0)
-    //                builder.Append(",.*?");
-    //            if(useGroupName)
-    //                builder.Append("\"" + field + "\"\\s*:\\s*" + "(?:\"(?<" + field + ">[^\"]*?)\"|(?<" + field + ">[\\d\\.\\+\\-eE]+|true|false|null))");
-    //            else
-    //                builder.Append("\"" + field + "\"\\s*:\\s*" + "(?:\"([^\"]*?)\"|([\\d\\.\\+\\-eE]+|true|false|null))");
-    //        }
-    //    }
-    //    return builder.ToString();
-    //}
 
 }

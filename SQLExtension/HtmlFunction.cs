@@ -13,9 +13,9 @@ public partial class Function
     {
         //text传空，加载上次保存的解析对象
         HtmlDocument document = null;
-        if(string.IsNullOrEmpty(text))
+        if(text == null)
         {
-            document = (HtmlDocument)Variable("系统解析缓存");
+            document = (HtmlDocument)Variable("Html解析缓存");
             if(document == null)
                 throw new Exception("无法解析空Html字符串，无法加载系统解析缓存");
         }
@@ -23,14 +23,14 @@ public partial class Function
         {
             document = new HtmlDocument();
             document.LoadHtml(text);
-            VariableAssign("系统解析缓存", document);
+            VariableAssign("Html解析缓存", document);
         }
         return document;
     }
 
 
     //Html路径提取函数
-    [SqlFunction(TableDefinition = CellTableDefinition, FillRowMethodName = CellTableFillRowMethod)]
+    [SqlFunction(IsDeterministic = true, TableDefinition = CellTableDefinition, FillRowMethodName = CellTableFillRowMethod)]
     public static IEnumerable HtmlPath(string text, string rowPath, string columnsPath)
     {
         LinkedList<object[]> result = new LinkedList<object[]>();
@@ -49,7 +49,7 @@ public partial class Function
                 int r = 0;
                 foreach(HtmlNode row in rows)
                 {
-                    result.AddLast(new object[] { null, r, null, GetString(row.InnerText) });
+                    result.AddLast(new object[] { null, r, null, GetText(row.InnerText) });
                     r++;
                 }
             }
@@ -67,7 +67,7 @@ public partial class Function
                             int c = 0;
                             foreach(HtmlNode node in nodes)
                             {
-                                result.AddLast(new object[] { null, r, xpath, GetString(node.InnerText) });
+                                result.AddLast(new object[] { null, r, xpath, GetText(node.InnerText) });
                                 c++;
                             }
                         }
@@ -78,79 +78,79 @@ public partial class Function
         }
         return result;
     }
-    //Html table标签提取函数
-    [SqlFunction(TableDefinition = CellTableDefinition, FillRowMethodName = CellTableFillRowMethod)]
-    public static IEnumerable HtmlTable(string text, string tablesPath, bool? isTranspose, string rowHeader)
-    {
-        LinkedList<object[]> result = new LinkedList<object[]>();
-        HtmlDocument document = HtmlParse(text);
-        //定位表节点
-        HtmlNodeCollection tables = document.DocumentNode.SelectNodes(tablesPath);
-        if(tables != null)
-        {
-            int t = 0;
-            foreach(HtmlNode table in tables)
-            {
-                HtmlNodeCollection trs = table.SelectNodes(".//tr");
-                if(trs != null)
-                {
-                    int r = 0;
-                    foreach(HtmlNode tr in trs)
-                    {
-                        HtmlNodeCollection tds = tr.SelectNodes("td");
-                        if(tds == null)
-                            tds = tr.SelectNodes("th");
-                        if(tds != null)
-                        {
-                            int c = 0;
-                            foreach(HtmlNode td in tds)
-                            {
-                                result.AddLast(new object[] { t, r, c, GetString(td.InnerText) });
-                                //解析跨咧
-                                HtmlAttribute colspan = td.Attributes["colspan"];
-                                if(colspan != null)
-                                {
-                                    int span = int.Parse(colspan.Value, NumberStyles.Float);
-                                    for(int i = 1; i < span; i++)
-                                    {
-                                        c++;
-                                        result.AddLast(new object[] { t, r, c, GetString(td.InnerText) });
-                                    }
-                                }
-                                //解析跨行
-                                HtmlAttribute rowspan = td.Attributes["rowspan"];
-                                if(rowspan != null)
-                                {
-                                    int span = int.Parse(rowspan.Value, NumberStyles.Float);
-                                    for(int i = 1; i < span; i++)
-                                    {
-                                        //result.Add(new object[] { "调试", trs.Count, c.ToString(), GetString(td.InnerText) });
-                                        HtmlNode newtd = HtmlNode.CreateNode(td.OuterHtml);
-                                        newtd.Attributes.Remove("rowspan");
-                                        HtmlNode nexttr = trs[r + i];
-                                        HtmlNode position = nexttr.SelectSingleNode("td[" + (c + 1) + "]");
-                                        if(position == null)
-                                            nexttr.AppendChild(newtd);
-                                        else
-                                            nexttr.InsertBefore(newtd, position);
-                                    }
-                                    td.Attributes.Remove("rowspan");
-                                }
-                                c++;
-                            }
-                        }
-                        r++;
-                    }
-                }
-                t++;
-            }
-        }
-        //执行行列变换和首行作为列名
-        if(isTranspose != null && isTranspose.Value)
-            RowColumnTranspose(result);
-        if(!string.IsNullOrEmpty(rowHeader))
-            RowAsHeader(result, rowHeader);
-        return result;
-    }
+    ////Html table标签提取函数
+    //[SqlFunction(TableDefinition = CellTableDefinition, FillRowMethodName = CellTableFillRowMethod)]
+    //public static IEnumerable HtmlTable(string text, string tablesPath, bool? isTranspose, string rowHeader)
+    //{
+    //    LinkedList<object[]> result = new LinkedList<object[]>();
+    //    HtmlDocument document = HtmlParse(text);
+    //    //定位表节点
+    //    HtmlNodeCollection tables = document.DocumentNode.SelectNodes(tablesPath);
+    //    if(tables != null)
+    //    {
+    //        int t = 0;
+    //        foreach(HtmlNode table in tables)
+    //        {
+    //            HtmlNodeCollection trs = table.SelectNodes(".//tr");
+    //            if(trs != null)
+    //            {
+    //                int r = 0;
+    //                foreach(HtmlNode tr in trs)
+    //                {
+    //                    HtmlNodeCollection tds = tr.SelectNodes("td");
+    //                    if(tds == null)
+    //                        tds = tr.SelectNodes("th");
+    //                    if(tds != null)
+    //                    {
+    //                        int c = 0;
+    //                        foreach(HtmlNode td in tds)
+    //                        {
+    //                            result.AddLast(new object[] { t, r, c, GetString(td.InnerText) });
+    //                            //解析跨咧
+    //                            HtmlAttribute colspan = td.Attributes["colspan"];
+    //                            if(colspan != null)
+    //                            {
+    //                                int span = int.Parse(colspan.Value, NumberStyles.Float);
+    //                                for(int i = 1; i < span; i++)
+    //                                {
+    //                                    c++;
+    //                                    result.AddLast(new object[] { t, r, c, GetString(td.InnerText) });
+    //                                }
+    //                            }
+    //                            //解析跨行
+    //                            HtmlAttribute rowspan = td.Attributes["rowspan"];
+    //                            if(rowspan != null)
+    //                            {
+    //                                int span = int.Parse(rowspan.Value, NumberStyles.Float);
+    //                                for(int i = 1; i < span; i++)
+    //                                {
+    //                                    //result.Add(new object[] { "调试", trs.Count, c.ToString(), GetString(td.InnerText) });
+    //                                    HtmlNode newtd = HtmlNode.CreateNode(td.OuterHtml);
+    //                                    newtd.Attributes.Remove("rowspan");
+    //                                    HtmlNode nexttr = trs[r + i];
+    //                                    HtmlNode position = nexttr.SelectSingleNode("td[" + (c + 1) + "]");
+    //                                    if(position == null)
+    //                                        nexttr.AppendChild(newtd);
+    //                                    else
+    //                                        nexttr.InsertBefore(newtd, position);
+    //                                }
+    //                                td.Attributes.Remove("rowspan");
+    //                            }
+    //                            c++;
+    //                        }
+    //                    }
+    //                    r++;
+    //                }
+    //            }
+    //            t++;
+    //        }
+    //    }
+    //    //执行行列变换和首行作为列名
+    //    if(isTranspose != null && isTranspose.Value)
+    //        RowColumnTranspose(result);
+    //    if(!string.IsNullOrEmpty(rowHeader))
+    //        RowAsHeader(result, rowHeader);
+    //    return result;
+    //}
 
 }

@@ -7,8 +7,8 @@ using System.Data.SqlTypes;
 public partial class Function
 {
     //文本格式化
-    [SqlFunction]
-    public static object ConvertType(object value0, string className)
+    [SqlFunction(IsDeterministic = true)]
+    public static object ConvertType(object value0, string typeName)
     {
         object value1 = value0;
         Type type = value0.GetType();
@@ -60,12 +60,12 @@ public partial class Function
             default:
                 return type.FullName;
         }
-        if(string.IsNullOrEmpty(className))
+        if(string.IsNullOrEmpty(typeName))
             return value1;
         else
-            return Convert.ChangeType(value1, Type.GetType(className.StartsWith("System.") ? className : "System." + className));
+            return Convert.ChangeType(value1, Type.GetType(typeName.StartsWith("System.") ? typeName : "System." + typeName));
     }
-    [SqlFunction]
+    [SqlFunction(IsDeterministic = true)]
     public static string TextFormat(string format, object value1, object value2, object value3, object value4, object value5)
     {
         return string.Format(format, ConvertType(value1, null), ConvertType(value2, null), ConvertType(value3, null), ConvertType(value4, null), ConvertType(value5, null));

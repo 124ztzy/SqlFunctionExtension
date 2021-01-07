@@ -23,46 +23,46 @@ public partial class Function
     }
 
 
-    //表第几行作为列名
-    public static void RowAsHeader(LinkedList<object[]> list, string rowName)
-    {
-        List<string> headers = new List<string>();
-        LinkedListNode<object[]> node = list.First;
-        while(node != null)
-        {
-            object[] cells = node.Value;
-            if(rowName.Equals(cells[1].ToString()))
-            {
-                headers.Add(cells[3]?.ToString());
-                LinkedListNode<object[]> deleteNode = node;
-                node = node.Next;
-                //一旦删除node.next就为空
-                list.Remove(deleteNode);
-            }
-            else
-            {
-                int index = Convert.ToInt32(cells[2]);
-                if(index < headers.Count)
-                    cells[2] = headers[index];
-                node = node.Next;
-            }
-        }
-    }
-    //转置，行转列
-    public static void RowColumnTranspose(LinkedList<object[]> list)
-    {
-        foreach(object[] cells in list)
-        {
-            object rowName = cells[1];
-            cells[1] = cells[2];
-            cells[2] = rowName;
-        }
-    }
+    ////表第几行作为列名
+    //public static void RowAsHeader(LinkedList<object[]> list, string rowName)
+    //{
+    //    List<string> headers = new List<string>();
+    //    LinkedListNode<object[]> node = list.First;
+    //    while(node != null)
+    //    {
+    //        object[] cells = node.Value;
+    //        if(rowName.Equals(cells[1].ToString()))
+    //        {
+    //            headers.Add(cells[3]?.ToString());
+    //            LinkedListNode<object[]> deleteNode = node;
+    //            node = node.Next;
+    //            //一旦删除node.next就为空
+    //            list.Remove(deleteNode);
+    //        }
+    //        else
+    //        {
+    //            int index = Convert.ToInt32(cells[2]);
+    //            if(index < headers.Count)
+    //                cells[2] = headers[index];
+    //            node = node.Next;
+    //        }
+    //    }
+    //}
+    ////转置，行转列
+    //public static void RowColumnTranspose(LinkedList<object[]> list)
+    //{
+    //    foreach(object[] cells in list)
+    //    {
+    //        object rowName = cells[1];
+    //        cells[1] = cells[2];
+    //        cells[2] = rowName;
+    //    }
+    //}
 
 
     //获取规范字符串
-    [SqlFunction]
-    public static string GetString(object value)
+    [SqlFunction(IsDeterministic = true)]
+    public static string GetText(object value)
     {
         if(value == null)
         {
@@ -83,18 +83,18 @@ public partial class Function
         }
     }
     //获取小数，支持汉字
-    [SqlFunction]
+    [SqlFunction(IsDeterministic = true)]
     [return: SqlFacet(Precision = 22, Scale = 6)]
-    public static decimal? GetNumber(string text)
+    public static decimal? GetDecimal(string text)
     {
-        if(text == null)
+        if (text == null)
         {
             return null;
         }
         else
         {
             text = text.Trim();
-            if(text == "" || text == "-" || text == "-%")
+            if (text == "" || text == "-" || text == "-%")
             {
                 return null;
             }
@@ -102,12 +102,12 @@ public partial class Function
             {
                 text = text.Replace(",", null);
                 decimal multiply = 1;
-                if(text.EndsWith("%"))
+                if (text.EndsWith("%"))
                 {
                     multiply = 0.01M;
                     text = text.Substring(0, text.Length - 1).Trim();
                 }
-                if(decimal.TryParse(text, NumberStyles.Float, null, out decimal value))
+                if (decimal.TryParse(text, NumberStyles.Float, null, out decimal value))
                 {
                     return value * multiply;
                 }
@@ -117,9 +117,9 @@ public partial class Function
                     int i = 0;
                     //之前值
                     int n = 0;
-                    foreach(char c in text)
+                    foreach (char c in text)
                     {
-                        switch(c)
+                        switch (c)
                         {
                             case '零':
                             case '〇':
@@ -154,7 +154,7 @@ public partial class Function
                                 i = 9;
                                 break;
                             case '十':
-                                if(i == 0 && n == 0)
+                                if (i == 0 && n == 0)
                                     n = 10;
                                 else
                                     n = n + i * 10;
@@ -169,7 +169,7 @@ public partial class Function
                                 i = 0;
                                 break;
                             case '万':
-                                if(i == 0)
+                                if (i == 0)
                                     n = n * 10000;
                                 else
                                     n = n + i * 10000;
@@ -185,29 +185,29 @@ public partial class Function
         }
     }
     //获取日期
-    [SqlFunction]
+    [SqlFunction(IsDeterministic=true)]
     public static DateTime? GetDateTime(string text)
     {
-        if(text == null)
+        if (text == null)
         {
             return null;
         }
         else
         {
             text = text.Trim().TrimStart('-', '/', '.');
-            if(text == "")
+            if (text == "")
             {
                 return null;
             }
             else
             {
-                if(int.TryParse(text, out int number) && text.Length == 8)
+                if (text.Length == 8 && int.TryParse(text, out int number))
                 {
                     return DateTime.ParseExact(text, "yyyyMMdd", null);
                 }
                 else
                 {
-                    if(DateTime.TryParse(text, out DateTime value))
+                    if (DateTime.TryParse(text, out DateTime value))
                         return value;
                     else
                         throw new Exception("无法解析的时间“" + text + "”");

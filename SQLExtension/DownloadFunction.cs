@@ -9,8 +9,8 @@ using System.Text;
 public static partial class Function
 {
     //下载文件
-    [SqlFunction]
-    public static long DownloadFile(string url, string headers, string postParam, string savePath)
+    [SqlFunction(IsDeterministic = true)]
+    public static string DownloadFile(string url, string headers, string postParam, string savePath)
     {
         FileInfo file = new FileInfo(savePath);
         if(!file.Directory.Exists)
@@ -30,27 +30,32 @@ public static partial class Function
             }
         }
         byte[] data = null;
-        if(string.IsNullOrEmpty(postParam))
+        if (string.IsNullOrEmpty(postParam))
+        {
             data = webClient.DownloadData(url);
+        }
         else
+        {
+            webClient.Headers["Content-Type"] = "application/x-www-form-urlencoded";
             data = webClient.UploadData(url, Encoding.UTF8.GetBytes(postParam));
+        }
         File.WriteAllBytes(savePath, data);
-        return data.LongLength;
+        return savePath;
     }
-    //下载文件并缓存，文件写入时间超出过期时间将重新下载
-    [SqlFunction]
-    public static long DownloadFileCache(string url, string headers, string postParam, string savePath, TimeSpan dueTime)
+    //下载缓存文件
+    [SqlFunction(IsDeterministic = true)]
+    public static string DownloadFileCache(string url, string headers, string postParam, string savePath, long cacheMs)
     {
         FileInfo file = new FileInfo(savePath);
-        if(file.Exists && (DateTime.Now - file.LastWriteTime) < dueTime)
-            return file.Length;
+        if(file.Exists && (DateTime.Now - file.CreationTime).TotalMilliseconds < cacheMs)
+            return savePath;
         else
             return DownloadFile(url, headers, postParam, savePath);
     }
 
 
     //下载文本
-    [SqlFunction]
+    [SqlFunction(IsDeterministic = true)]
     public static string DownloadText(string url, string headers, string postParam, string encoding)
     {
         WebClient webClient = new WebClient();
@@ -69,26 +74,24 @@ public static partial class Function
         }
         webClient.Encoding = string.IsNullOrEmpty(encoding) ? Encoding.UTF8 : Encoding.GetEncoding(encoding);
         if(string.IsNullOrEmpty(postParam))
+        {
             return webClient.DownloadString(url);
+        }
         else
+        {
+            webClient.Headers["Content-Type"] = "application/x-www-form-urlencoded";
             return webClient.UploadString(url, postParam);
+        }
     }
-    //下载文本并缓存，文件写入时间超出过期时间将重新下载
-    [SqlFunction]
-    public static string DownloadTextCache(string url, string headers, string postParam, string encoding, string savePath, TimeSpan dueTime)
+    //下载缓存文本
+    [SqlFunction(IsDeterministic = true)]
+    public static string DownloadTextCache(string url, string headers, string postParam, string encoding, string savePath, long cacheMs)
     {
+        Encoding encode = string.IsNullOrEmpty(encoding) ? Encoding.UTF8 : Encoding.GetEncoding(encoding);
         FileInfo file = new FileInfo(savePath);
-        if(file.Exists && (DateTime.Now - file.LastWriteTime) < dueTime)
-        {
-            return File.ReadAllText(savePath);
-        }
+        if(file.Exists && (DateTime.Now - file.CreationTime).TotalMilliseconds < cacheMs)
+            return File.ReadAllText(savePath, encode);
         else
-        {
-            string content = DownloadText(url, headers, postParam, encoding);
-            if(!file.Directory.Exists)
-                file.Directory.Create();
-            File.WriteAllText(savePath, content);
-            return content;
-        }
+            return File.ReadAllText(DownloadFile(url, headers, postParam, savePath), encode);
     }
 }

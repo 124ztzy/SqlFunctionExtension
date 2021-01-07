@@ -48,7 +48,7 @@ public static partial class Function
 
 
     //文件长度，文件不存在返回-1
-    [SqlFunction]
+    [SqlFunction(IsDeterministic = true)]
     public static long FileSize(string path)
     {
         FileInfo file = new FileInfo(path);
@@ -58,7 +58,7 @@ public static partial class Function
             return -1;
     }
     //移动文件，返回文件长度
-    [SqlFunction]
+    [SqlFunction(IsDeterministic = true)]
     public static long FileMove(string path1, string path2)
     {
         FileInfo file1 = new FileInfo(path1);
@@ -76,7 +76,7 @@ public static partial class Function
         }
     }
     //复制文件，返回文件长度
-    [SqlFunction]
+    [SqlFunction(IsDeterministic = true)]
     public static long FileCopy(string path1, string path2)
     {
         FileInfo file1 = new FileInfo(path1);
@@ -94,7 +94,7 @@ public static partial class Function
         }
     }
     //删除文件，返回文件长度
-    [SqlFunction]
+    [SqlFunction(IsDeterministic = true)]
     public static long FileDelete(string path)
     {
         FileInfo file = new FileInfo(path);
@@ -111,13 +111,13 @@ public static partial class Function
 
 
     //读取文本，默认utf-8编码
-    [SqlFunction]
+    [SqlFunction(IsDeterministic = true)]
     public static string FileRead(string path, string encoding)
     {
         return File.ReadAllText(path, string.IsNullOrEmpty(encoding) ? Encoding.UTF8 : Encoding.GetEncoding(encoding));
     }
     //写入文本，默认utf-8编码
-    [SqlFunction]
+    [SqlFunction(IsDeterministic = true)]
     public static long FileWirte(string path, string content, string encoding)
     {
         FileInfo file = new FileInfo(path);
@@ -130,7 +130,7 @@ public static partial class Function
 
 
     //文件列表
-    [SqlFunction(TableDefinition = "fullPath nvarchar(max), fileName nvarchar(max), fileExtension nvarchar(max), fileSize bigint, createTime datetime, lastWirteTime datetime", FillRowMethodName = "FillFileTreeRow")]
+    [SqlFunction(IsDeterministic = true, TableDefinition = "fullPath nvarchar(max), fileName nvarchar(max), fileExtension nvarchar(max), fileSize bigint, createTime datetime, lastWirteTime datetime", FillRowMethodName = "FillFileTreeRow")]
     public static IEnumerable FileTree(string path, bool isRecurve)
     {
         return FileTreeRecurve(path, isRecurve, new LinkedList<object[]>());

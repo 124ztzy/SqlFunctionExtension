@@ -9,7 +9,7 @@ using System.IO;
 public partial class Function
 {
     //Excel文件函数
-    [SqlFunction(TableDefinition = CellTableDefinition, FillRowMethodName = CellTableFillRowMethod)]
+    [SqlFunction(IsDeterministic = true, TableDefinition = CellTableDefinition, FillRowMethodName = CellTableFillRowMethod)]
     public static IEnumerable ExcelFile(string path)
     {
         LinkedList<object[]> result = new LinkedList<object[]>();
@@ -23,7 +23,7 @@ public partial class Function
                 {
                     for(int c = 0; c < reader.FieldCount; c++)
                     {
-                        result.AddLast(new object[] { reader.Name, r, c, GetString(reader.GetValue(c)) });
+                        result.AddLast(new object[] { reader.Name, r, c, GetText(reader.GetValue(c)) });
                     }
                     r++;
                 }
@@ -36,7 +36,7 @@ public partial class Function
 
 
     //Csv文件函数
-    [SqlFunction(TableDefinition = CellTableDefinition, FillRowMethodName = CellTableFillRowMethod)]
+    [SqlFunction(IsDeterministic = true, TableDefinition = CellTableDefinition, FillRowMethodName = CellTableFillRowMethod)]
     public static IEnumerable CsvText(string text)
     {
         LinkedList<object[]> result = new LinkedList<object[]>();
@@ -47,7 +47,7 @@ public partial class Function
             string[] cols = row.Split(',');
             for(int c = 0; c < cols.Length; c++)
             {
-                result.AddLast(new object[] { null, r, c, GetString(cols[c]) });
+                result.AddLast(new object[] { null, r, c, GetText(cols[c]) });
             }
             r++;
         }
